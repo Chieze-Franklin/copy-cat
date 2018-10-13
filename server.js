@@ -2,6 +2,7 @@ const Express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request-promise-native');
 const SlackBot = require('slackbots');
+const utils = require('./utils');
 
 const bot = new SlackBot({
   token: 'xoxb-258316641222-456717969239-941OPgyqXKXg8F0D13LFJRR0', 
@@ -19,11 +20,22 @@ app.post('/', (req, res) => {
 })
 
 app.post('/message', (req, res) => {
-
   res.header('Content-Type', 'application/x-www-form-urlencoded');
-  res.status(200).json({ challenge: req.body.challenge });
 
-  console.log('/message:', req.body);
+  // if Slack is "challenging" our URL in order to verify it
+  if (req.body.challenge) {
+    return res.status(200).json({ challenge: req.body.challenge });
+  }
+
+  let hash = '';
+
+  // create a hash of the just-posted message (if message is text)
+  if (req.body.event && req.body.event.type === 'message' && req.body.event.text) {
+    hash = utils.hashString(req.body.event.text);
+    console.log(req.body.event.text, ': ', hash);
+  }
+
+  res.status(200).json({});
 })
 
 app.use('*', (req, res) => {
@@ -40,7 +52,7 @@ bot.on('start', function() {
     icon_emoji: ':cat:'
   };
 
-  bot.postMessageToChannel('general', 'meow!');
+  // bot.postMessageToChannel('general', 'meow!');
 });
 
 bot.on('message', function(data) {
