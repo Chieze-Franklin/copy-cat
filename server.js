@@ -39,7 +39,15 @@ app.post('/message', (req, res) => {
     // fetch all (text) messages from channel
     utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
     .then((response) => {
-      console.log(response);
+      if (response.data && response.data.ok && response.data.messages) {
+        const oldMessages = response.data.messages.slice(1); // ignore first message
+        const matches = oldMessages.filter((msg) => hash === utils.hashString(msg.text));
+        if (matches.length > 0) {
+          console.log('MATCH!!!');
+        } else {
+          console.log('NO_MATCH');
+        }
+      }
       return res.status(200).send();
     })
     .catch((err) => {
