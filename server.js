@@ -29,19 +29,14 @@ app.post('/message', (req, res) => {
     return res.status(200).json({ challenge: req.body.challenge });
   }
 
-  let hash = '';
-
-  // create a hash of the just-posted message (if message is text)
   if (req.body.event && req.body.event.type === 'message' && req.body.event.text) {
-    hash = utils.hashString(req.body.event.text);
-    // console.log(req.body.event.text, ': ', hash);
-
     // fetch all (text) messages from channel
     utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
     .then((response) => {
       if (response.data && response.data.ok && response.data.messages) {
         const oldMessages = response.data.messages.slice(1); // ignore first message
-        const matches = oldMessages.filter((msg) => hash === utils.hashString(msg.text));
+        const matches = oldMessages.filter((msg) => 
+          req.body.event.text.toLowerCase() === msg.text.toLowerCase());
         if (matches.length > 0) {
           console.log('MATCH!!!');
         } else {
