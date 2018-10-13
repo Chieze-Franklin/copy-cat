@@ -1,6 +1,5 @@
 const Express = require('express');
 const bodyParser = require('body-parser');
-const request = require('request-promise-native');
 const SlackBot = require('slackbots');
 const utils = require('./utils');
 
@@ -32,7 +31,18 @@ app.post('/message', (req, res) => {
   // create a hash of the just-posted message (if message is text)
   if (req.body.event && req.body.event.type === 'message' && req.body.event.text) {
     hash = utils.hashString(req.body.event.text);
-    console.log(req.body.event.text, ': ', hash);
+    // console.log(req.body.event.text, ': ', hash);
+
+    // fetch all (text) messages from channel
+    utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
+    .then((response) => {
+      console.log(response);
+      return res.status(200).send();
+    })
+    .catch((err) => {
+      return res.status(500).json(err);
+      console.log(err);
+    })
   }
 
   res.status(200).json({});
