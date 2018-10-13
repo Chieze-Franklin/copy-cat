@@ -1,10 +1,13 @@
+const dotenv = require('dotenv');
 const Express = require('express');
 const bodyParser = require('body-parser');
 const SlackBot = require('slackbots');
 const utils = require('./utils');
 
+dotenv.config();
+
 const bot = new SlackBot({
-  token: 'xoxb-258316641222-456717969239-941OPgyqXKXg8F0D13LFJRR0', 
+  token: process.env.SLACK_BOT_TOKEN, 
   name: 'copy-cat'
 });
 
@@ -36,7 +39,15 @@ app.post('/message', (req, res) => {
     // fetch all (text) messages from channel
     utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
     .then((response) => {
-      console.log(response);
+      if (response.data && response.data.ok && response.data.messages) {
+        const oldMessages = response.data.messages.slice(1); // ignore first message
+        const matches = oldMessages.filter((msg) => hash === utils.hashString(msg.text));
+        if (matches.length > 0) {
+          console.log('MATCH!!!');
+        } else {
+          console.log('NO_MATCH');
+        }
+      }
       return res.status(200).send();
     })
     .catch((err) => {

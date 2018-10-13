@@ -12,7 +12,7 @@ module.exports = {
         url = 'https://slack.com/api/groups.history';
       }
       url += '?channel=' + channel;
-      url += '&token=xoxp-258316641222-256914464753-455054728289-3c475c67c8a27eacbf33b3ca3969ec9a';
+      url += '&token=' + process.env.SLACK_USER_TOKEN;
       request({
         url: url,
         method: 'GET',
