@@ -1,10 +1,13 @@
+const dotenv = require('dotenv');
 const Express = require('express');
 const bodyParser = require('body-parser');
 const SlackBot = require('slackbots');
 const utils = require('./utils');
 
+dotenv.config();
+
 const bot = new SlackBot({
-  token: 'xoxb-258316641222-456717969239-941OPgyqXKXg8F0D13LFJRR0', 
+  token: process.env.SLACK_BOT_TOKEN, 
   name: 'copy-cat'
 });
 
