@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/Chieze-Franklin/copy-cat/issues"
   },
-  "homepage": "https://github.com/Chieze-Franklin/copy-cat#readme"
+  "homepage": "https://github.com/Chieze-Franklin/copy-cat#readme",
+  "dependencies": {
+    "slackbots": "^1.1.0"
+  }
 }
