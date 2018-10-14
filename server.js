@@ -39,16 +39,45 @@ app.post('/message', (req, res) => {
         const matches = oldMessages.filter((msg) => 
           req.body.event.text.toLowerCase() === msg.text.toLowerCase());
         if (matches.length > 0) {
+          // calculate permalink to original message
           const msg = matches[0];
-          bot.postEphemeral(req.body.event.channel, newMessage.user,
-            "The message you just posted is a copy of a recent message in this channel!");
+          utils.getMessagePermalink(msg, req.body.event.channel)
+          .then((response2) => {
+            // post ephemeral message to user
+            bot.postEphemeral(req.body.event.channel, newMessage.user,
+              "The message you just posted is a copy of a recent message in this channel!",
+              {
+                attachments: [{
+                  title: 'original post',
+                  // title_link: response2.data.permalink,
+                  text: response2.data.permalink
+                }]
+              }
+            );
+
+            // post threaded message to copy message
+            bot.postMessage(
+              req.body.event.channel,
+              "This message is a copy of a recent message in this channel!",
+              { 
+                thread_ts: newMessage.ts,
+                attachments: [{
+                  title: 'original post',
+                  // title_link: response2.data.permalink,
+                  text: response2.data.permalink
+                }]
+              }
+            );
+          })
+          .catch((err2) => {
+            return res.status(500).json(err2);
+          })
         }
       }
       return res.status(200).send();
     })
     .catch((err) => {
       return res.status(500).json(err);
-      console.log(err);
     })
   }
 
