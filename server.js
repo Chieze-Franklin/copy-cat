@@ -18,7 +18,22 @@ app.use(bodyParser.json());
 
 app.post('/', (req, res) => {
 
-  console.log('/message:', req.body);
+  console.log('/:', req.body);
+})
+
+app.post('/delete', (req, res) => {
+  const payload = JSON.parse(req.body.payload);
+  utils.deleteMessage(payload.actions[0].value, payload.channel.id)
+  .then((response) => {
+    if (response.data.ok) {
+      return res.status(200).send('Duplicate message deleted!');
+    }
+
+    return res.status(200).send('Could not delete duplicate message!');
+  })
+  .catch((err) => {
+    return res.status(500).json(err);
+  })
 })
 
 app.post('/message', (req, res) => {
@@ -71,7 +86,16 @@ app.post('/message', (req, res) => {
                   }, {
                     title: 'copy',
                     // title_link: response3.data.permalink,
-                    text: response3.data.permalink
+                    text: response3.data.permalink,
+                    fallback: 'Could not delete duplicate post.',
+                    callback_id: 'delete_copy',
+                    actions: [{
+                      name: 'copy',
+                      text: 'Delete Copy',
+                      style: 'danger',
+                      type: 'button',
+                      value: newMessage.ts
+                    }]
                   }]
                 }
               );
