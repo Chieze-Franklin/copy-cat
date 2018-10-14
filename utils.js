@@ -30,6 +30,29 @@ module.exports = {
       })
     });
   },
+  getMessagePermalink: function(message, channel) {
+    return new Promise((resolve, reject) => {
+      let url = 'https://slack.com/api/chat.getPermalink';
+      url += '?channel=' + channel;
+      url += '&token=' + process.env.SLACK_BOT_TOKEN;
+      url += '&message_ts=' + message.ts;
+      request({
+        url: url,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        resolveWithFullResponse: true
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        resolve({ data });
+      })
+      .catch((error) => {
+        resolve({ error })
+      })
+    });
+  },
   hashString: function(input) {
     const shasum = crypto.createHash(algorithm);
     shasum.update(input);
