@@ -71,7 +71,14 @@ app.post('/message', (req, res) => {
                   }, {
                     title: 'copy',
                     // title_link: response3.data.permalink,
-                    text: response3.data.permalink
+                    text: response3.data.permalink,
+                    actions: [{
+                      name: "copy",
+                      text: "Delete Copy",
+                      style: "danger",
+                      type: "button",
+                      value: "delete"
+                    }]
                   }]
                 }
               );
