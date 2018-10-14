@@ -34,13 +34,14 @@ app.post('/message', (req, res) => {
     utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
     .then((response) => {
       if (response.data && response.data.ok && response.data.messages) {
+        const newMessage = response.data.messages[0];
         const oldMessages = response.data.messages.slice(1); // ignore first message
         const matches = oldMessages.filter((msg) => 
           req.body.event.text.toLowerCase() === msg.text.toLowerCase());
         if (matches.length > 0) {
-          console.log('MATCH!!!');
-        } else {
-          console.log('NO_MATCH');
+          const msg = matches[0];
+          bot.postEphemeral(req.body.event.channel, newMessage.user,
+            "The message you just posted is a copy of a recent message in this channel!");
         }
       }
       return res.status(200).send();
