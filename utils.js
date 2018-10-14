@@ -55,6 +55,28 @@ module.exports = {
       })
     });
   },
+  findUserById: function(id) {
+    return new Promise((resolve, reject) => {
+      let url = 'https://slack.com/api/users.info';
+      url += '?user=' + id;
+      url += '&token=' + process.env.SLACK_USER_TOKEN;
+      request({
+        url: url,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        resolveWithFullResponse: true
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        resolve({ data });
+      })
+      .catch((error) => {
+        resolve({ error })
+      })
+    });
+  },
   getMessagePermalink: function(message, channel) {
     return new Promise((resolve, reject) => {
       let url = 'https://slack.com/api/chat.getPermalink';
