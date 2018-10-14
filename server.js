@@ -16,14 +16,16 @@ const app = new Express();
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.post('/', (req, res) => {
-
-  console.log('/:', req.body);
-})
-
 app.post('/delete', (req, res) => {
   const payload = JSON.parse(req.body.payload);
-  utils.deleteMessage(payload.actions[0].value, payload.channel.id)
+  const value = payload.actions[0].value;
+  let message_ts = value;
+  let channel = payload.channel.id;
+  if (value.indexOf('|') > -1) {
+    channel = value.split('|')[0];
+    message_ts = value.split('|')[1];
+  }
+  utils.deleteMessage(message_ts, channel)
   .then((response) => {
     if (response.data.ok) {
       return res.status(200).send('Duplicate message deleted!');
@@ -98,7 +100,41 @@ app.post('/message', (req, res) => {
                     }]
                   }]
                 }
-              );
+              )
+              .then((response4) => {})
+              .catch((err4) => {
+                // if the bot could not post in the channel, send a DM to the user
+                utils.findUserById(newMessage.user)
+                .then((response5) => {
+                  const username = response5.data.user.name;
+                  bot.postMessageToUser(username, 
+                    "The message you just posted is a copy of a recent message in the channel!",
+                    {
+                      attachments: [{
+                        title: 'original post',
+                        // title_link: response2.data.permalink,
+                        text: response2.data.permalink
+                      }, {
+                        title: 'copy',
+                        // title_link: response3.data.permalink,
+                        text: response3.data.permalink,
+                        fallback: 'Could not delete duplicate post.',
+                        callback_id: 'delete_copy',
+                        actions: [{
+                          name: 'copy',
+                          text: 'Delete Copy',
+                          style: 'danger',
+                          type: 'button',
+                          value: req.body.event.channel + '|' + newMessage.ts
+                        }]
+                      }]
+                    }
+                  );
+                })
+                .catch((err5) => {
+                  return res.status(500).json(err5);
+                })
+              })
             })
             .catch((err3) => {
               return res.status(500).json(err3);
@@ -138,7 +174,6 @@ bot.on('start', function() {
 
 bot.on('message', function(data) {
   // all ingoing events https://api.slack.com/rtm
-  console.log('message:', data);
 });
 
 // little hack to prevent app from sleeping on heroku
