@@ -46,15 +46,30 @@ app.post('/message', (req, res) => {
     return res.status(200).json({ challenge: req.body.challenge });
   }
 
-  if (req.body.event && req.body.event.type === 'message' && !req.body.event.thread_ts && req.body.event.text) {
+  if (req.body.event && req.body.event.type === 'message' && !req.body.event.thread_ts) {
     // fetch all (text) messages from channel
     utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type)
     .then((response) => {
       if (response.data && response.data.ok && response.data.messages) {
         const newMessage = response.data.messages[0];
-        const oldMessages = response.data.messages.slice(1); // ignore first message
-        const matches = oldMessages.filter((msg) => 
-          req.body.event.text.toLowerCase() === msg.text.toLowerCase());
+        const oldMessages = response.data.messages.filter(msg => !msg.thread_ts).slice(1); // ignore first message
+        const matches = oldMessages.filter((msg) => {
+          let match = (req.body.event.text || '').toLowerCase() === (msg.text || '').toLowerCase();
+          console.log('1:', match);
+          console.log('req.body.event.files && msg.files && match:', (req.body.event.files && msg.files && match));
+          if (req.body.event.files && msg.files && match) { // no need entering this block if match is false
+            // compare the metadata of their first files
+            match = (req.body.event.files[0].mimetype === msg.files[0].mimetype) &&
+              (req.body.event.files[0].size === msg.files[0].size) &&
+              (req.body.event.files[0].original_w === msg.files[0].original_w) &&
+              (req.body.event.files[0].original_h === msg.files[0].original_h);console.log('2:', match);
+          }
+          // if (req.body.event.files && match) { // no need entering this block if match is false
+          //   // compare the hashes of the files
+          //   match = req.body.event.files[0].url_private === msg.files[0].url_private;
+          // }
+          return match;
+        });
         if (matches.length > 0) {
           // calculate permalink to original message
           const msg = matches[0];
@@ -131,23 +146,23 @@ app.post('/message', (req, res) => {
                     }
                   );
                 })
-                .catch((err5) => {
+                .catch((err5) => {console.log('err5:', err5)
                   return res.status(500).json(err5);
                 })
               })
             })
-            .catch((err3) => {
+            .catch((err3) => {console.log('err3:', err3)
               return res.status(500).json(err3);
             })
           })
-          .catch((err2) => {
+          .catch((err2) => {console.log('err2:', err2)
             return res.status(500).json(err2);
           })
         }
       }
-      return res.status(200).send();
+      //return res.status(200).send();
     })
-    .catch((err) => {
+    .catch((err) => {console.log('err:', err)
       return res.status(500).json(err);
     })
   }
