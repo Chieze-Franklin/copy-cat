@@ -53,9 +53,7 @@ const utils = {
       if (newMessage.files && msg.files && match) { // no need entering this block if match is false
         // compare the metadata of their first files
         match = (newMessage.files[0].mimetype === msg.files[0].mimetype) &&
-          (newMessage.files[0].size === msg.files[0].size) &&
-          (newMessage.files[0].original_w === msg.files[0].original_w) &&
-          (newMessage.files[0].original_h === msg.files[0].original_h);
+          (newMessage.files[0].size === msg.files[0].size);
       }
       if (newMessage.files && msg.files && match) { // no need entering this block if match is false
         // compare the hashes of the files
@@ -69,25 +67,6 @@ const utils = {
         break;
       }
     }
-    // matches = oldMessages.filter((msg) => {
-    //   // compare message text
-    //   let match = (newMessage.text || '').toLowerCase() === (msg.text || '').toLowerCase();
-    //   // compare metadata of message file
-    //   if (newMessage.files && msg.files && match) { // no need entering this block if match is false
-    //     // compare the metadata of their first files
-    //     match = (newMessage.files[0].mimetype === msg.files[0].mimetype) &&
-    //       (newMessage.files[0].size === msg.files[0].size) &&
-    //       (newMessage.files[0].original_w === msg.files[0].original_w) &&
-    //       (newMessage.files[0].original_h === msg.files[0].original_h);
-    //   }
-    //   // if (newMessage.files && msg.files && match) { // no need entering this block if match is false
-    //   //   // compare the hashes of the files
-    //   //   const hash1 = await utils.hashFile(newMessage.files[0].url_private);
-    //   //   const hash2 = await utils.hashFile(msg.files[0].url_private);
-    //   //   match = hash1 === hash2;
-    //   // }
-    //   return match;
-    // });
     return matches;
   },
   deleteMessage: async function(message_ts, channel) {
