@@ -27,24 +27,10 @@ app.post('/delete', async (req, res) => {
 
 app.post('/message', async (req, res) => {
   res.header('Content-Type', 'application/x-www-form-urlencoded');
-
   // if Slack is "challenging" our URL in order to verify it
   if (req.body.challenge) {
     return res.status(200).json({ challenge: req.body.challenge });
   }
-
-  try {
-    if (req.body.event && req.body.event.type === 'message' && !req.body.event.thread_ts && !req.body.event.bot_id) {
-      const messages = await utils.fetchMessagesFromChannel(req.body.event.channel, req.body.event.channel_type);
-      const matches = await utils.compareNewMessageToOldMessages(messages);
-      if (matches.length > 0) {
-        await utils.reportDuplicate(req.body.event.channel, matches[0], req.body.event, req.body.event.user);
-      }
-    }
-  } catch (error) {
-    console.log('/message: ', error);
-  }
-  
   return res.status(200).json({});
 })
 
