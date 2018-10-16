@@ -1,13 +1,19 @@
 const crypto = require('crypto');
+const dotenv = require('dotenv');
 const fs = require('fs');
 const request = require('request-promise-native');
 const SlackBot = require('slackbots');
+
+dotenv.config();
 
 const algorithm = 'sha1';
 const bot = new SlackBot({
   token: process.env.SLACK_BOT_TOKEN, 
   name: 'CopyCat'
 });
+bot.on('start', function() {});
+
+bot.on('message', function(data) {});
 
 const utils = {
   compareNewMessageToOldMessages: async function(messages) {
@@ -116,22 +122,21 @@ const utils = {
     const hash = shasum.digest('hex')
     return hash;
   },
-  reportDuplicate: async function(channel, originalMsg, copyMsg, user) {
-    const linkToOriginalMsg = await utils.getMessagePermalink(originalMsg, channel);
-    const linkToCopyMsg = await utils.getMessagePermalink(copyMsg, channel);
+  reportDuplicate: async function(channelId, originalMsg, copyMsg, userId) {
+    const linkToOriginalMsg = await utils.getMessagePermalink(originalMsg, channelId);
+    const linkToCopyMsg = await utils.getMessagePermalink(copyMsg, channelId);
     try {
-      const threadedMsg = await utils.reportDuplicateInChannelAsThread(channel, originalMsg, linkToOriginalMsg);
-      await utils.reportDuplicateInChannelAsEphemeral(channel, originalMsg, copyMsg, user, linkToOriginalMsg, linkToCopyMsg, threadedMsg);
+      const threadedMsg = await utils.reportDuplicateInChannelAsThread(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg);
+      await utils.reportDuplicateInChannelAsEphemeral(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg, threadedMsg);
     } catch (error) {
-      console.log('report dup: ', error);
-      await utils.reportDuplicateToUser(channel, originalMsg, copyMsg, user, linkToOriginalMsg, linkToCopyMsg);
+      await utils.reportDuplicateToUser(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg);
     }
   },
-  reportDuplicateInChannelAsEphemeral: async function(channel, originalMsg, copyMsg, user, linkToOriginalMsg, linkToCopyMsg, threadedMsg) {
+  reportDuplicateInChannelAsEphemeral: async function(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg, threadedMsg) {
     // post ephemeral message in channel, visible only to user
     await bot.postEphemeral(
-      channel,
-      user,
+      channelId,
+      userId,
       "The message you just posted is a copy of a recent message in this channel!",
       {
         attachments: [{
@@ -155,12 +160,12 @@ const utils = {
       }
     );
   },
-  reportDuplicateInChannelAsThread: async function(channel, originalMsg, linkToOriginalMsg) {
+  reportDuplicateInChannelAsThread: async function(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg) {
     const response = await bot.postMessage(
-      channel,
+      channelId,
       "This message is a copy of a recent message in this channel!",
       { 
-        thread_ts: originalMsg.ts,
+        thread_ts: copyMsg.ts,
         attachments: [{
           title: 'original post',
           // title_link: linkToOriginalMsg,
@@ -170,7 +175,7 @@ const utils = {
     );
     return response.message;
   },
-  reportDuplicateToUser: async function(channel, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg) {
+  reportDuplicateToUser: async function(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg) {
     const user = await utils.findUserById(userId);
     await bot.postMessageToUser(
       user.name,
@@ -191,7 +196,7 @@ const utils = {
             text: 'Delete Copy',
             style: 'danger',
             type: 'button',
-            value: JSON.stringify({ channel: channel, message_ts: copyMsg.ts })
+            value: JSON.stringify({ channel: channelId, message_ts: copyMsg.ts })
           }]
         }]
       }

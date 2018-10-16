@@ -1,16 +1,13 @@
-const dotenv = require('dotenv');
 const Express = require('express');
 const bodyParser = require('body-parser');
 const utils = require('./utils');
-
-dotenv.config();
 
 const app = new Express();
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.post('/delete', (req, res) => {
+app.post('/delete', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload);
     const value = JSON.parse(payload.actions[0].value);
@@ -24,7 +21,6 @@ app.post('/delete', (req, res) => {
     }
     return res.status(200).send('Could not delete duplicate message!');
   } catch (error) {
-    console.log('/delete: ', error);
     return res.status(500).json(error);
   }
 })
@@ -60,18 +56,6 @@ let server = app.listen(process.env.PORT || 5000, () => {
   let port = server.address().port;
   console.log(`Server started on port ${port}`)
 })
-
-// bot.on('start', function() {
-//   var params = {
-//     icon_emoji: ':cat:'
-//   };
-
-//   // bot.postMessageToChannel('general', 'meow!');
-// });
-
-// bot.on('message', function(data) {
-//   // all ingoing events https://api.slack.com/rtm
-// });
 
 // little hack to prevent app from sleeping on heroku
 // https://quickleft.com/blog/6-easy-ways-to-prevent-your-heroku-node-app-from-sleeping/
