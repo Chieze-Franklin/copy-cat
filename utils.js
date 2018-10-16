@@ -1,12 +1,10 @@
 const crypto = require('crypto');
 const dotenv = require('dotenv');
-const fs = require('fs');
 const request = require('request-promise-native');
 const SlackBot = require('slackbots');
 
 dotenv.config();
 
-const algorithm = 'sha1';
 const bot = new SlackBot({
   token: process.env.SLACK_BOT_TOKEN, 
   name: 'CopyCat'
@@ -37,13 +35,20 @@ const utils = {
           (newMessage.files[0].original_w === msg.files[0].original_w) &&
           (newMessage.files[0].original_h === msg.files[0].original_h);
       }
-      // if (newMessage.files && match) { // no need entering this block if match is false
+      // if (newMessage.files && msg.files && match) { // no need entering this block if match is false
       //   // compare the hashes of the files
-      //   match = newMessage.files[0].url_private === msg.files[0].url_private;
+      //   const hash1 = await utils.hashFile(newMessage.files[0].url_private);
+      //   const hash2 = await utils.hashFile(msg.files[0].url_private);
+      //   match = hash1 === hash2;
       // }
       return match;
     });
     return matches;
+  },
+  compareUploadedFiless: async function(url1, url2) {
+    const hash1 = await utils.hashFile(url1);
+    const hash2 = await utils.hashFile(url2);
+    return hash1 === hash2;
   },
   deleteMessage: async function(message_ts, channel) {
     let url = 'https://slack.com/api/chat.delete';
@@ -116,10 +121,21 @@ const utils = {
     const data = JSON.parse(response.body);
     return data.permalink;
   },
-  hashString: function(input) {
-    const shasum = crypto.createHash(algorithm);
-    shasum.update(input);
-    const hash = shasum.digest('hex')
+  hashFile: async function(url) {
+    let hash = '';
+    const shasum = crypto.createHash('sha256');
+    const response = await request({
+      url: url,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + process.env.SLACK_BOT_TOKEN
+      },
+      resolveWithFullResponse: true
+    });
+    //console.log(response)
+    shasum.update(response.body);
+    hash = shasum.digest('hex')
+    //console.log('hash:', hash);
     return hash;
   },
   reportDuplicate: async function(channelId, originalMsg, copyMsg, userId) {
