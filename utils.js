@@ -3,7 +3,9 @@ const dotenv = require('dotenv');
 const request = require('request-promise-native');
 const SlackBot = require('slackbots');
 
-dotenv.config();let count = 1;
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const bot = new SlackBot({
   token: process.env.SLACK_BOT_TOKEN, 
