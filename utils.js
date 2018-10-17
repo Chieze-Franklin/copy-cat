@@ -1,19 +1,31 @@
 const crypto = require('crypto');
 const dotenv = require('dotenv');
-const fs = require('fs');
 const request = require('request-promise-native');
 const SlackBot = require('slackbots');
 
-dotenv.config();
+dotenv.config();let count = 1;
 
-const algorithm = 'sha1';
 const bot = new SlackBot({
   token: process.env.SLACK_BOT_TOKEN, 
   name: 'CopyCat'
 });
-bot.on('start', function() {});
+bot.on('start', function() {
+  console.log('Connection established with Slack!')
+});
 
-bot.on('message', function(data) {});
+bot.on('message', async function(data) {
+  try {
+    if (data.type === 'message' && !data.thread_ts && !data.bot_id) {
+      const messages = await utils.fetchMessagesFromChannel(data.channel);
+      const matches = await utils.compareNewMessageToOldMessages(messages);
+      if (matches.length > 0) {
+        await utils.reportDuplicate(data.channel, matches[0], data, data.user);
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 const utils = {
   compareNewMessageToOldMessages: async function(messages) {
@@ -26,23 +38,35 @@ const utils = {
     // .filter(msg => (!msg.thread_ts && !msg.bot_id)): ignore threads and messages by bots
     // .slice(1): ignore the first message (which should be the new message)
     const oldMessages = messages.filter(msg => (!msg.thread_ts && !msg.bot_id)).slice(1);
-    matches = oldMessages.filter((msg) => {
+    let i;
+    // the branch ft-other-message-types uses filter here
+    // it has been changed to good old for because:
+    // 1. we are not interested in finding all matches; just finding one match is enough
+    //    to show that a message is a duplicate. The for loop allows us to 'break' as soon
+    //    as we find a find
+    // 2. we can easily use async function 'utils.hashFile' in for (even if it's discouraged)
+    for (i = 0; i < oldMessages.length; i++) { 
+      const msg = oldMessages[i];
       // compare message text
       let match = (newMessage.text || '').toLowerCase() === (msg.text || '').toLowerCase();
       // compare metadata of message file
       if (newMessage.files && msg.files && match) { // no need entering this block if match is false
         // compare the metadata of their first files
         match = (newMessage.files[0].mimetype === msg.files[0].mimetype) &&
-          (newMessage.files[0].size === msg.files[0].size) &&
-          (newMessage.files[0].original_w === msg.files[0].original_w) &&
-          (newMessage.files[0].original_h === msg.files[0].original_h);
+          (newMessage.files[0].size === msg.files[0].size);
       }
-      // if (newMessage.files && match) { // no need entering this block if match is false
-      //   // compare the hashes of the files
-      //   match = newMessage.files[0].url_private === msg.files[0].url_private;
-      // }
-      return match;
-    });
+      if (newMessage.files && msg.files && match) { // no need entering this block if match is false
+        // compare the hashes of the files
+        const hash1 = await utils.hashFile(newMessage.files[0].url_private);
+        const hash2 = await utils.hashFile(msg.files[0].url_private);
+        match = hash1 === hash2;
+      }
+
+      if (match) {
+        matches.push(msg);
+        break;
+      }
+    }
     return matches;
   },
   deleteMessage: async function(message_ts, channel) {
@@ -63,12 +87,9 @@ const utils = {
     const data = JSON.parse(response.body);
     return data.ok;
   },
-  fetchMessagesFromChannel: async function(channel, channel_type) {
+  fetchMessagesFromChannel: async function(channel) {
     let messages = [];
-    let url = 'https://slack.com/api/channels.history';
-    if (channel_type === 'group') {
-      url = 'https://slack.com/api/groups.history';
-    }
+    let url = 'https://slack.com/api/conversations.history';
     url += '?channel=' + channel;
     url += '&token=' + process.env.SLACK_USER_TOKEN;
     const response = await request({
@@ -116,10 +137,19 @@ const utils = {
     const data = JSON.parse(response.body);
     return data.permalink;
   },
-  hashString: function(input) {
-    const shasum = crypto.createHash(algorithm);
-    shasum.update(input);
-    const hash = shasum.digest('hex')
+  hashFile: async function(url) {
+    let hash = '';
+    const shasum = crypto.createHash('sha256');
+    const response = await request({
+      url: url,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + process.env.SLACK_BOT_TOKEN
+      },
+      resolveWithFullResponse: true
+    });
+    shasum.update(response.body);
+    hash = shasum.digest('hex')
     return hash;
   },
   reportDuplicate: async function(channelId, originalMsg, copyMsg, userId) {
@@ -177,30 +207,33 @@ const utils = {
   },
   reportDuplicateToUser: async function(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg) {
     const user = await utils.findUserById(userId);
-    await bot.postMessageToUser(
-      user.name,
-      "The message you just posted is a copy of a recent message in the channel!",
-      {
-        attachments: [{
-          title: 'original post',
-          // title_link: linkToOriginalMsg,
-          text: linkToOriginalMsg
-        }, {
-          title: 'copy',
-          // title_link: linkToCopyMsg,
-          text: linkToCopyMsg,
-          fallback: 'Could not delete duplicate post.',
-          callback_id: 'delete_copy',
-          actions: [{
-            name: 'copy',
-            text: 'Delete Copy',
-            style: 'danger',
-            type: 'button',
-            value: JSON.stringify({ channel: channelId, message_ts: copyMsg.ts })
+    // user can be undefined
+    if (user && user.name) {
+      await bot.postMessageToUser(
+        user.name,
+        "The message you just posted is a copy of a recent message in the channel!",
+        {
+          attachments: [{
+            title: 'original post',
+            // title_link: linkToOriginalMsg,
+            text: linkToOriginalMsg
+          }, {
+            title: 'copy',
+            // title_link: linkToCopyMsg,
+            text: linkToCopyMsg,
+            fallback: 'Could not delete duplicate post.',
+            callback_id: 'delete_copy',
+            actions: [{
+              name: 'copy',
+              text: 'Delete Copy',
+              style: 'danger',
+              type: 'button',
+              value: JSON.stringify({ channel: channelId, message_ts: copyMsg.ts })
+            }]
           }]
-        }]
-      }
-    );
+        }
+      );
+    }
   }
 }
 
