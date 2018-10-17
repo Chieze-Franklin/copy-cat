@@ -48,6 +48,6 @@ let server = app.listen(process.env.PORT || 5000, () => {
 if (process.env.NODE_ENV === 'production') {
   const https = require("https");
   setInterval(function() {
-    https.get("https://copy-cat.herokuapp.com");
+    https.get("https://copy-cat-on-slack.herokuapp.com");
   }, 300000); // every 5 minutes
 }
