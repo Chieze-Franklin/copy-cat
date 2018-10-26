@@ -1,11 +1,35 @@
-const Express = require('express');
+const express = require('express');
+const exphbs = require('express3-handlebars');
 const bodyParser = require('body-parser');
 const utils = require('./utils');
 
-const app = new Express();
+const app = new express();
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+app.use('**/assets', express.static(__dirname + '/assets'));
+
+app.set('views', __dirname + '/views');
+app.engine('html', exphbs.create({
+  defaultLayout: 'main.html',
+  layoutsDir: app.get('views') + '/layouts',
+  partialsDir: [app.get('views') + '/partials']
+}).engine);
+app.set('view engine', 'html');
+
+app.get('/', (req, res) => {
+  res.render('index.html');
+});
+app.get('/contact', (req, res) => {
+  res.render('index.html');
+});
+app.get('/privacy', (req, res) => {
+  res.render('index.html');
+});
+app.get('/support', (req, res) => {
+  res.render('index.html');
+});
 
 app.post('/delete', async (req, res) => {
   try {
@@ -34,8 +58,8 @@ app.post('/message', async (req, res) => {
   return res.status(200).json({});
 })
 
-app.use('*', (req, res) => {
-  res.redirect('https://github.com/Chieze-Franklin/copy-cat');
+app.use('/redirect', (req, res) => {
+  console.log('redirect url');
 });
 
 let server = app.listen(process.env.PORT || 5000, () => {
