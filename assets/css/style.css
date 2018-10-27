@@ -99,6 +99,7 @@ p{
 	text-align:center;
 	background:url(../assets/img/pw_maze_black_2X.png) left top repeat;
 	padding:280px 0;
+	background-color: rgb(27, 27, 27);
 }
 .logo{
 	width:130px;

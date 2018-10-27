@@ -21,15 +21,6 @@ app.set('view engine', 'html');
 app.get('/', (req, res) => {
   res.render('index.html');
 });
-app.get('/contact', (req, res) => {
-  res.render('index.html');
-});
-app.get('/privacy', (req, res) => {
-  res.render('index.html');
-});
-app.get('/support', (req, res) => {
-  res.render('index.html');
-});
 
 app.post('/delete', async (req, res) => {
   try {
