@@ -773,8 +773,9 @@ border: 2px solid #fff;
 ---------------------------------*/
 
 .footer{
-	background:url(../assets/img/pw_maze_black_2X.png) left top repeat;
-	padding:35px 0 35px;
+	/* background:url(../assets/img/pw_maze_black_2X.png) left top repeat;
+	padding:35px 0 35px; */
+	background-color: rgb(27, 27, 27);
 }
 .footer-logo{
 	margin:15px auto 35px;
