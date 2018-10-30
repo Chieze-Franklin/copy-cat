@@ -1,5 +1,4 @@
 const express = require('express');
-const exphbs = require('express3-handlebars');
 const bodyParser = require('body-parser');
 const utils = require('./utils');
 
@@ -9,14 +8,6 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.use('**/files', express.static(__dirname + '/files'));
-
-app.set('views', __dirname + '/views');
-app.engine('html', exphbs.create({
-  defaultLayout: 'main.html',
-  layoutsDir: app.get('views') + '/layouts',
-  partialsDir: [app.get('views') + '/partials']
-}).engine);
-app.set('view engine', 'html');
 
 app.get('/', (req, res) => {
   res.redirect('/files/index.html')
