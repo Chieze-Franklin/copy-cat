@@ -8,7 +8,7 @@ const app = new express();
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('**/assets', express.static(__dirname + '/assets'));
+app.use('**/files', express.static(__dirname + '/files'));
 
 app.set('views', __dirname + '/views');
 app.engine('html', exphbs.create({
@@ -19,7 +19,7 @@ app.engine('html', exphbs.create({
 app.set('view engine', 'html');
 
 app.get('/', (req, res) => {
-  res.render('index.html');
+  res.redirect('/files/index.html')
 });
 
 app.post('/delete', async (req, res) => {
