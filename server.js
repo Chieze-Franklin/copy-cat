@@ -1,11 +1,17 @@
-const Express = require('express');
+const express = require('express');
 const bodyParser = require('body-parser');
 const utils = require('./utils');
 
-const app = new Express();
+const app = new express();
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+app.use('**/files', express.static(__dirname + '/files'));
+
+app.get('/', (req, res) => {
+  res.redirect('/files/index.html')
+});
 
 app.post('/delete', async (req, res) => {
   try {
@@ -34,20 +40,11 @@ app.post('/message', async (req, res) => {
   return res.status(200).json({});
 })
 
-app.use('*', (req, res) => {
-  res.redirect('https://github.com/Chieze-Franklin/copy-cat');
+app.use('/redirect', (req, res) => {
+  console.log('redirect url');
 });
 
 let server = app.listen(process.env.PORT || 5000, () => {
   let port = server.address().port;
   console.log(`Server started on port ${port}`)
 })
-
-// little hack to prevent app from sleeping on heroku
-// https://quickleft.com/blog/6-easy-ways-to-prevent-your-heroku-node-app-from-sleeping/
-if (process.env.NODE_ENV === 'production') {
-  const https = require("https");
-  setInterval(function() {
-    https.get("https://copy-cat-on-slack.herokuapp.com");
-  }, 300000); // every 5 minutes
-}
