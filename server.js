@@ -7,10 +7,9 @@ const app = new express();
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('**/files', express.static(__dirname + '/files'));
-
 app.get('/', (req, res) => {
-  res.redirect('/files/index.html')
+  // replace with your own implementation
+  res.redirect('https://github.com/Chieze-Franklin/copy-cat');
 });
 
 app.post('/delete', async (req, res) => {
