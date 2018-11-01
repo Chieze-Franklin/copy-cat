@@ -161,7 +161,7 @@ const utils = {
     try {
       let threadedMsg = {};
       try {
-        threadedMsg = await utils.reportDuplicateInChannelAsThread(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg);
+        // threadedMsg = await utils.reportDuplicateInChannelAsThread(channelId, originalMsg, copyMsg, userId, linkToOriginalMsg, linkToCopyMsg);
       } catch (error) {
         threadedMsg = {};
       }
