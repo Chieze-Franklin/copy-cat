@@ -18,7 +18,7 @@ bot.on('start', function() {
 
 bot.on('message', async function(data) {
   try {
-    const isUrl = data.text.startsWith('<http') && data.text.endsWith('>');
+    const isUrl = data.text ? data.text.startsWith('<http') && data.text.endsWith('>') : false;
     if (data.type === 'message' && isUrl && !data.thread_ts && !data.bot_id) {
       const messages = await utils.fetchMessagesFromChannel(data.channel);
       const matches = await utils.compareNewMessageToOldMessages(messages);
